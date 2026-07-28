@@ -80,3 +80,16 @@ Run the pytest suite to verify archive decryption and file category classificati
 ```bash
 python -m pytest
 ```
+
+## Standalone Executable Build (Windows)
+
+To compile the standalone `RenPyExtractor.exe` executable yourself:
+1. Activate the virtual environment and ensure dependencies (including PyInstaller) are installed.
+2. Run the build compiler script:
+   ```bash
+   python build_exe.py
+   ```
+This will compile, bundle all customtkinter theme configurations/assets, and write the output `RenPyExtractor.exe` file inside the `dist/` directory.
+
+Users can download the pre-compiled, double-clickable `RenPyExtractor.exe` binary directly from the [GitHub Releases](https://github.com/abhishek-s12/rpa-extractor/releases) page.
+
