@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Optional, Union
 import numpy as np
 from PySide6.QtCore import QPoint, QRectF, QTime, QUrl, Signal, Qt
-from PySide6.QtGui import QColor, QFont, QMouseEvent, QPaintEvent, QPainter, QPen
+from PySide6.QtGui import QColor, QFont, QKeyEvent, QMouseEvent, QPaintEvent, QPainter, QPen
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSlider, QVBoxLayout, QWidget
 from core.logger import logger
@@ -87,8 +87,11 @@ class AudioWaveformCanvas(QWidget):
 class InteractiveAudioPlayer(QWidget):
     """Complete interactive audio player panel."""
 
+    SEEK_STEP_MS = 5000
+
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
+        self.setFocusPolicy(Qt.StrongFocus)
         self.media_player = QMediaPlayer()
         self.audio_output = QAudioOutput()
         self.media_player.setAudioOutput(self.audio_output)
@@ -165,6 +168,22 @@ class InteractiveAudioPlayer(QWidget):
         else:
             self.media_player.play()
             self.play_btn.setText("Pause")
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        if event.key() == Qt.Key_Space:
+            self.toggle_play()
+        elif event.key() == Qt.Key_Left:
+            self.seek_relative(-self.SEEK_STEP_MS)
+        elif event.key() == Qt.Key_Right:
+            self.seek_relative(self.SEEK_STEP_MS)
+        else:
+            super().keyPressEvent(event)
+
+    def seek_relative(self, offset_ms: int) -> None:
+        if self.duration_ms <= 0:
+            return
+        target_pos = max(0, min(self.duration_ms, self.media_player.position() + offset_ms))
+        self.media_player.setPosition(target_pos)
 
     def seek_to_ratio(self, ratio: float) -> None:
         if self.duration_ms > 0:
