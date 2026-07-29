@@ -150,16 +150,75 @@ def extract_cmd(
     logger.info(f"Extraction complete. Successfully extracted {total_extracted} files.")
 
 
+@app.command(name="repack")
+def repack_cmd(
+    source: Path = typer.Argument(..., help="Path to folder containing assets to pack into RPA."),
+    output: Path = typer.Option(..., "--output", "-o", help="Target output .rpa file path."),
+    version: str = typer.Option("RPA-3.0", "--version", "-v", help="Archive format version: 'RPA-3.0' or 'RPA-2.0'."),
+    key: str = typer.Option("0424b2b4", "--key", "-k", help="Hexadecimal XOR encryption key for RPA-3.0."),
+) -> None:
+    """Packs a directory of customized files into an encrypted Ren'Py Archive (.rpa)."""
+    setup_logger(debug=False)
+    logger.info(f"Starting CLI repack of {source} -> {output}")
+    try:
+        from core.rpa_repacker import RpaArchiveWriter
+
+        key_val = int(key, 16) if key else 0x0424b2b4
+        writer = RpaArchiveWriter(output, format_version=version, key=key_val)
+        file_map = writer.add_directory(source)
+        writer.pack(file_map)
+        logger.info(f"Successfully packed {len(file_map)} files into {output}")
+    except Exception as e:
+        logger.error(f"Repack command failed: {e}")
+        raise typer.Exit(code=1)
+
+
+@app.command(name="decompile")
+def decompile_cmd(
+    path: Path = typer.Argument(..., help="Path to .rpyc file or directory containing .rpyc files."),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output directory or file path for decompiled .rpy script(s)."),
+) -> None:
+    """Decompiles Ren'Py compiled script files (.rpyc) back into editable .rpy scripts."""
+    setup_logger(debug=False)
+    logger.info(f"Starting CLI decompile for {path}")
+    try:
+        from parsers.rpyc_decompiler import RpycDecompiler
+
+        if path.is_file():
+            out_file = output if output else path.with_suffix(".rpy")
+            text = RpycDecompiler.decompile(path)
+            out_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(out_file, "w", encoding="utf-8") as f:
+                f.write(text)
+            logger.info(f"Decompiled script saved to: {out_file}")
+        elif path.is_dir():
+            out_dir = output if output else path
+            out_dir.mkdir(parents=True, exist_ok=True)
+            count = 0
+            for rpyc in path.rglob("*.rpyc"):
+                dest = out_dir / f"{rpyc.stem}.rpy"
+                text = RpycDecompiler.decompile(rpyc)
+                with open(dest, "w", encoding="utf-8") as f:
+                    f.write(text)
+                count += 1
+            logger.info(f"Successfully decompiled {count} .rpyc files in {path}")
+        else:
+            logger.error(f"Invalid path: {path}")
+            raise typer.Exit(code=1)
+    except Exception as e:
+        logger.error(f"Decompile command failed: {e}")
+        raise typer.Exit(code=1)
+
+
 @app.command(name="gui")
 def gui_cmd(debug: bool = typer.Option(False, "--debug", help="Enable debug logs in app log file.")) -> None:
-    """Launches the desktop GUI application."""
+    """Launches the PySide6 desktop GUI application."""
     setup_logger(debug=debug)
-    logger.info("Launching desktop GUI...")
+    logger.info("Launching PySide6 desktop GUI...")
     try:
-        from ui.app_ui import RenPyExtractorApp
+        from ui.app_qt import main_qt
 
-        app_window = RenPyExtractorApp()
-        app_window.mainloop()
+        main_qt()
     except Exception as e:
         logger.critical(f"Failed to start GUI application: {e}")
         sys.exit(1)
@@ -175,3 +234,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
