@@ -48,6 +48,7 @@ logs/
 settings.json
 metadata.json
 prompt.md
+guide.md
 docs/roadmap_v2.md
 docs/roadmap_v3.md
 docs/v3_feature_guide.md
