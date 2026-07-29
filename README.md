@@ -1,95 +1,107 @@
-# Ren'Py Asset Extraction Tool
+# Ren'Py Asset Extraction Tool v2.0
 
-A professional-grade desktop application and command-line utility built from scratch in Python to scan, inspect, preview, and selectively unpack Ren'Py game directories and `.rpa` archives.
+[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+[![UI Framework](https://img.shields.io/badge/GUI-PySide6%20%2F%20Qt6-brightgreen.svg)](https://www.qt.io/qt-for-python)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Good First Issues](https://img.shields.io/badge/contributions-good%20first%20issues-orange.svg)](https://github.com/abhishek-s12/rpa-extractor/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+[![Tests](https://img.shields.io/badge/tests-pytest%20passing-success.svg)](tests/)
 
-This tool is designed for digital preservation, modding, localization, and educational backup of assets from games that you legally own.
+A professional-grade PySide6 (Qt6) desktop application and command-line utility built in Python to scan, inspect, preview, unpack, decompile, and repack Ren'Py game assets and `.rpa` archives.
 
-## Features
+Designed for digital preservation, modding, localization, and educational backup of assets from games that you legally own.
 
-- **Game Folder Detection**: Automatically identifies standard Ren'Py game folders, scripts, and archives.
-- **Hierarchical Asset Tree**: Lists both loose file directories and internal `.rpa` archive structures before extraction.
-- **Rich Media Preview**: In-app image preview (Pillow), audio specifications (Mutagen), video characteristics (OpenCV), and script line metrics (dialogues, labels, definitions).
-- **Filters & Selective Unpacking**: Extract everything, or selectively extract specific types of files:
-  - Audio files only (`.mp3`, `.ogg`, `.wav`, etc.)
-  - Images only (`.png`, `.jpg`, `.webp`, etc.)
-  - Video files only (`.mp4`, `.webm`, etc.)
-  - Scripts only (`.rpy`, `.rpyc`)
-  - Fonts and Game data files
-- **Background Multi-threading**: Background scanner and extractors keep the GUI responsive during heavy tasks, displaying speeds and ETAs.
-- **Manifest Catalog**: Automatically generates a `metadata.json` mapping of all extracted files with file sizes, relative paths, MD5/SHA256 checksums, and image perceptual hashes.
+---
 
-## Project Structure
+## ✨ Features in v2.0
 
-```
-renpy-extractor/
-├── app/                  # Main GUI modules
-├── core/                 # Scanners, archive readers, and configuration utilities
-├── extractors/           # Audio, video, and image specifications extraction
-├── parsers/              # Ren'Py script scanning and metrics
-├── ui/                   # CustomTkinter interface frames, previews, and styles
-├── workers/              # Background threads handling scan and extraction
-├── tests/                # Unit test suite verifying binary unpickling
-├── main.py               # Launcher entrypoint supporting CLI and GUI
-└── pyproject.toml        # Ruff/mypy formatting and linter configurations
-```
+- 🎨 **PySide6 (Qt6) Desktop Interface**: Responsive splitter layout, dark theme accents, glassmorphic card widgets, and custom font support.
+- 🎵 **Interactive Audio Player**: Waveform visualization canvas with **click-to-seek** playback position and audio controls.
+- 🎬 **Real-Time Video HUD**: Dynamic overlay displaying video resolution, framerate, and time index live on video frames during playback.
+- 🖼️ **Image Inspector**: Zoom-to-cursor, pan, reset controls, and a **side-by-side comparison slider** for original vs optimized images.
+- 📦 **RPA Archive Compiler (Repacker)**: Package customized asset folders into encrypted/obfuscated Ren'Py Archive (`.rpa` v3/v2) files with custom XOR key support.
+- 📜 **Built-in `.rpyc` Decompiler**: Reverse compile Ren'Py compiled scripts (`.rpyc`) back into editable `.rpy` scripts with in-app **syntax highlighting**.
+- 🔍 **Smart Search & Filter HUD**: Query assets by dimensions (`width >= 1080`), duration (`duration > 60`), size (`size > 2MB`), category (`cat:audio`), or regex (`re:^bg_.*`) with preset management.
+- ⚡ **Fast Mode & Manifest Catalog**: Unpack archives in under 1-2 minutes or generate a full `metadata.json` catalog with file checksums.
 
-## Setup & Run
+---
+
+## 🚀 Quickstart Guide
 
 ### Prerequisites
-- Python 3.11+
-- Standard Tk/Tcl libraries (usually bundled with Python)
+- Python 3.10+
 
-### Installation
-1. Create and activate a Python virtual environment:
+### Installation & Setup
+
+1. **Clone the Repository**:
    ```bash
+   git clone https://github.com/abhishek-s12/rpa-extractor.git
+   cd rpa-extractor
+   ```
+
+2. **Set up Virtual Environment**:
+   ```bash
+   # Create virtual environment
    python -m venv .venv
-   # Windows
-   .venv\Scripts\activate
-   # macOS/Linux
+
+   # Activate environment
+   # Windows (PowerShell):
+   .venv\Scripts\Activate.ps1
+   # macOS / Linux:
    source .venv/bin/activate
    ```
-2. Install dependency packages:
+
+3. **Install Dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
 
-### Execution
+4. **Launch the PySide6 Application**:
+   ```bash
+   python main.py gui
+   # Or simply:
+   python main.py
+   ```
 
-#### Headless CLI
-- Scan a game folder or individual archive:
+---
+
+## 💻 Command Line Interface (CLI)
+
+- **Scan a game folder or archive**:
   ```bash
   python main.py scan /path/to/game
   ```
-- Extract specific categories (e.g., audio and images only) using high-speed **Fast Mode** (skips calculating hashes/media specs):
+- **Extract specific asset categories**:
   ```bash
-  python main.py extract /path/to/game --output /path/to/output --category audio --category images --fast
+  python main.py extract /path/to/game -o /path/to/output --category audio --category images --fast
   ```
-  *(Omit the `--fast` or `-f` flag if you want to generate full MD5/SHA256 checksums and Pillow/Mutagen/OpenCV property sheets in `metadata.json`)*
-
-#### Graphical Desktop App
-- Launch the GUI:
+- **Repack a folder into a `.rpa` archive**:
   ```bash
-  python main.py gui
-  # Or simply run without arguments
-  python main.py
+  python main.py repack /path/to/folder -o /path/to/output.rpa --version RPA-3.0 --key 0424b2b4
   ```
-  *In the sidebar, check the **Fast Mode (Skip Metadata)** option to skip heavy analysis and perform a direct concurrent file copy (recommended for unpacking games in under 1-2 minutes).*
+- **Decompile `.rpyc` script files**:
+  ```bash
+  python main.py decompile /path/to/script.rpyc -o /path/to/output_folder
+  ```
 
-## Testing
-Run the pytest suite to verify archive decryption and file category classification rules:
+---
+
+## 🧪 Testing
+
+Run the automated `pytest` test suite:
 ```bash
 python -m pytest
 ```
 
-## Standalone Executable Build (Windows)
+---
 
-To compile the standalone `RenPyExtractor.exe` executable yourself:
-1. Activate the virtual environment and ensure dependencies (including PyInstaller) are installed.
-2. Run the build compiler script:
-   ```bash
-   python build_exe.py
-   ```
-This will compile, bundle all customtkinter theme configurations/assets, and write the output `RenPyExtractor.exe` file inside the `dist/` directory.
+## 🤝 Contributing
 
-Users can download the pre-compiled, double-clickable `RenPyExtractor.exe` binary directly from the [GitHub Releases](https://github.com/abhishek-s12/rpa-extractor/releases) page.
+We welcome contributions! Check out our open **[Good First Issues](https://github.com/abhishek-s12/rpa-extractor/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)** for beginner-friendly tasks.
 
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for full development environment setup and pull request guidelines.
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).
