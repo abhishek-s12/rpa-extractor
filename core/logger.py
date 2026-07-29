@@ -8,7 +8,10 @@ from pathlib import Path
 from loguru import logger
 
 # Output log directory
-LOG_DIR = Path(__file__).resolve().parent.parent / "logs"
+if getattr(sys, "frozen", False):
+    LOG_DIR = Path(sys.executable).resolve().parent / "logs"
+else:
+    LOG_DIR = Path(__file__).resolve().parent.parent / "logs"
 LOG_DIR.mkdir(exist_ok=True)
 
 # Format specifications
@@ -33,12 +36,13 @@ def setup_logger(debug: bool = False) -> None:
     log_level = "DEBUG" if debug else "INFO"
 
     # Add console handler
-    logger.add(
-        sys.stderr,
-        format=LOG_FORMAT,
-        level=log_level,
-        colorize=True,
-    )
+    if sys.stderr is not None:
+        logger.add(
+            sys.stderr,
+            format=LOG_FORMAT,
+            level=log_level,
+            colorize=True,
+        )
 
     # Add rotating file handler
     logger.add(

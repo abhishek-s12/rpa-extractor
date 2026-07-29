@@ -20,7 +20,11 @@ class AppSettings:
             settings_path: Custom path to save/load settings, defaults to settings.json in app root.
         """
         if settings_path is None:
-            self.settings_path = Path(__file__).resolve().parent.parent / "settings.json"
+            import sys
+            if getattr(sys, "frozen", False):
+                self.settings_path = Path(sys.executable).resolve().parent / "settings.json"
+            else:
+                self.settings_path = Path(__file__).resolve().parent.parent / "settings.json"
         else:
             self.settings_path = settings_path
 
