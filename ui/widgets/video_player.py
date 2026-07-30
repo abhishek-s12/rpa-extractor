@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Optional, Union
 import cv2
 from PySide6.QtCore import QTime, QTimer, QUrl, Qt
-from PySide6.QtGui import QColor, QFont, QImage, QPaintEvent, QPainter, QPen, QPixmap
+from PySide6.QtGui import QColor, QFont, QImage, QKeyEvent, QPaintEvent, QPainter, QPen, QPixmap
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
 from PySide6.QtMultimediaWidgets import QVideoWidget
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QSlider, QVBoxLayout, QWidget
@@ -74,8 +74,11 @@ class VideoCanvasWithHUD(QLabel):
 class InteractiveVideoPlayer(QWidget):
     """Complete video player with dynamic HUD overlay and OpenCV playback fallback."""
 
+    SEEK_STEP_SECONDS = 5
+
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
+        self.setFocusPolicy(Qt.StrongFocus)
         self.video_path: Optional[Path] = None
         self.cap: Optional[cv2.VideoCapture] = None
 
@@ -172,6 +175,25 @@ class InteractiveVideoPlayer(QWidget):
     def toggle_hud(self) -> None:
         self.canvas.hud_visible = not self.canvas.hud_visible
         self.canvas.update()
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        if event.key() == Qt.Key_Space:
+            self.toggle_play()
+        elif event.key() == Qt.Key_Left:
+            self.seek_relative(-self.SEEK_STEP_SECONDS)
+        elif event.key() == Qt.Key_Right:
+            self.seek_relative(self.SEEK_STEP_SECONDS)
+        else:
+            super().keyPressEvent(event)
+
+    def seek_relative(self, offset_seconds: int) -> None:
+        if not self.cap or not self.cap.isOpened() or self.total_frames <= 0:
+            return
+        offset_frames = int(offset_seconds * self.fps)
+        max_frame = self.total_frames - 1
+        target_frame = max(0, min(max_frame, self.current_frame + offset_frames))
+        self.seek_slider.setValue(target_frame)
+        self._seek_frame(target_frame)
 
     def _read_next_frame(self) -> None:
         if not self.cap or not self.cap.isOpened():
