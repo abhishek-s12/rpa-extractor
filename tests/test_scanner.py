@@ -11,7 +11,7 @@ from core.scanner import AssetScanner
 def mock_game_dir() -> Generator[Path, None, None]:
     """Prepares a mock directory tree mimicking a Ren'Py game folder structure."""
     with tempfile.TemporaryDirectory() as tmpdir:
-        root = Path(tmpdir)
+        root = Path(tmpdir).resolve()
         
         # Create game folder structure
         game_sub = root / "game"
