@@ -45,7 +45,7 @@ class RenPyUnpickler(pickle.Unpickler):
     def find_class(self, module: str, name: str) -> Any:
         if module.startswith("renpy") or module.startswith("store"):
             # Create dynamic stub class for any renpy AST node
-            def stub_factory(*args, **kwargs):
+            def stub_factory(*args: Any, **kwargs: Any) -> StubRenPyNode:
                 node = StubRenPyNode(f"{module}.{name}")
                 return node
             stub_factory.__name__ = name

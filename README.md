@@ -4,7 +4,7 @@
 [![UI Framework](https://img.shields.io/badge/GUI-PySide6%20%2F%20Qt6-brightgreen.svg)](https://www.qt.io/qt-for-python)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Good First Issues](https://img.shields.io/badge/contributions-good%20first%20issues-orange.svg)](https://github.com/abhishek-s12/rpa-extractor/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
-[![Tests](https://img.shields.io/badge/tests-pytest%20passing-success.svg)](tests/)
+[![Continuous Integration](https://github.com/abhishek-s12/rpa-extractor/actions/workflows/ci.yml/badge.svg)](https://github.com/abhishek-s12/rpa-extractor/actions/workflows/ci.yml)
 
 A professional-grade PySide6 (Qt6) desktop application and command-line utility built in Python to scan, inspect, preview, unpack, decompile, and repack Ren'Py game assets and `.rpa` archives.
 

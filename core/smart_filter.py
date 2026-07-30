@@ -7,7 +7,7 @@ and manages export preset configurations.
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 from core.logger import logger
 
 
@@ -79,8 +79,8 @@ class SmartFilterEngine:
             # Duration: duration / dur
             m_d = re.match(r"^(?:duration|dur)\s*([><=]+)\s*(\d+(?:\.\d+)?)$", token, re.IGNORECASE)
             if m_d:
-                op, val = m_d.group(1), float(m_d.group(2))
-                filtered = [a for a in filtered if SmartFilterEngine._eval_num(a.get("duration"), op, val)]
+                op_d, val_d = m_d.group(1), float(m_d.group(2))
+                filtered = [a for a in filtered if SmartFilterEngine._eval_num(a.get("duration"), op_d, val_d)]
                 continue
 
             # File Size: size
@@ -166,7 +166,8 @@ class PresetManager:
 
         try:
             with open(self.storage_path, "r", encoding="utf-8") as f:
-                return json.load(f)
+                data = json.load(f)
+                return cast(Dict[str, str], data)
         except Exception as e:
             logger.error(f"Failed to load presets: {e}")
             return {}

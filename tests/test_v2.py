@@ -14,7 +14,7 @@ from core.smart_filter import PresetManager, SmartFilterEngine
 from parsers.rpyc_decompiler import RpycDecompiler
 
 
-def test_rpa_repacker_roundtrip():
+def test_rpa_repacker_roundtrip() -> None:
     """Tests packing files into an RPAv3 archive and reading them back."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)
@@ -44,7 +44,7 @@ def test_rpa_repacker_roundtrip():
         assert b"Hello World" in script_bytes
 
 
-def test_smart_filter_engine():
+def test_smart_filter_engine() -> None:
     """Tests dynamic query parsing in SmartFilterEngine."""
     assets = [
         {"name": "bg_beach.png", "rel_path": "images/bg_beach.png", "category": "images", "width": 1920, "height": 1080, "size_bytes": 2 * 1024 * 1024},
@@ -72,7 +72,7 @@ def test_smart_filter_engine():
     assert res_re[0]["name"] == "bg_beach.png"
 
 
-def test_preset_manager():
+def test_preset_manager() -> None:
     """Tests saving and retrieving export filter presets."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         json_path = Path(tmp_dir) / "presets.json"
@@ -85,7 +85,7 @@ def test_preset_manager():
         assert pm.get_preset("Music Only") is None
 
 
-def test_rpyc_decompiler_fallback():
+def test_rpyc_decompiler_fallback() -> None:
     """Tests RpycDecompiler string and AST fallback processing."""
     raw_content = b"RENPY RPC2\x00\x00\x00\x01label start:\n    'Sample dialogue line'"
     decompiled = RpycDecompiler.decompile(raw_content)

@@ -8,7 +8,7 @@ import os
 import pickle
 import zlib
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Mapping, Optional, Tuple, Union
 from core.logger import logger
 
 
@@ -58,7 +58,7 @@ class RpaArchiveWriter:
 
         return file_map
 
-    def pack(self, file_map: Dict[str, Union[str, Path]], progress_callback=None) -> Path:
+    def pack(self, file_map: Mapping[str, Union[str, Path]], progress_callback: Optional[Callable[[int, int, str], None]] = None) -> Path:
         """Packs files specified in file_map into the RPA archive.
 
         Args:
