@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ren'Py Asset Extraction Tool v3.0 - Browser Asset Explorer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a24;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            border-bottom: 2px solid #3d3d5c;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #7b68ee;
+            margin: 0 0 10px 0;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .panel {
+            background: #252538;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .sidebar { flex: 1; }
+        .main-content { flex: 3; }
+        input[type="text"], button {
+            background: #1a1a24;
+            border: 1px solid #4d4d73;
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background: #6c5ce7;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover { background: #5649c0; }
+        .preset-badge {
+            display: inline-block;
+            background: #34344e;
+            padding: 6px 12px;
+            margin: 4px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .preset-badge:hover { background: #6c5ce7; }
+        .asset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .asset-card {
+            background: #1a1a24;
+            border-radius: 6px;
+            padding: 10px;
+            border: 1px solid #33334d;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Ren'Py Asset Explorer v3.0 (WebAssembly Edition)</h1>
+        <p>Run lightweight archive inspection, smart filtering, and cloud export presets directly in your browser.</p>
+    </div>
+
+    <div class="container">
+        <div class="panel sidebar">
+            <h3>Cloud Export Presets</h3>
+            <div id="presetsContainer">
+                <span class="preset-badge" onclick="setQuery('cat:images width >= 1080')">High-Res Sprites</span>
+                <span class="preset-badge" onclick="setQuery('cat:images tag:happy')">Happy Characters</span>
+                <span class="preset-badge" onclick="setQuery('cat:audio duration > 30')">Background Music</span>
+                <span class="preset-badge" onclick="setQuery('cat:images location:night')">Night Scenes</span>
+            </div>
+
+            <h3 style="margin-top: 30px;">Archive Inspector</h3>
+            <input type="file" id="rpaFileInput" accept=".rpa" style="margin-bottom: 10px; width: 100%;">
+            <div id="rpaStatus">Select an RPA file to inspect header signatures.</div>
+        </div>
+
+        <div class="panel main-content">
+            <h3>Smart Filter Search HUD</h3>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="searchInput" placeholder="Query e.g. cat:images tag:happy width >= 1080" style="flex: 1;">
+                <button onclick="runFilter()">Filter Assets</button>
+            </div>
+
+            <div class="asset-grid" id="assetResults">
+                <div class="asset-card">
+                    <h4>sprite_heroine_happy.png</h4>
+                    <p>Category: images</p>
+                    <p>Tags: happy, main_heroine, day</p>
+                </div>
+                <div class="asset-card">
+                    <h4>bg_classroom_night.png</h4>
+                    <p>Category: images</p>
+                    <p>Tags: background, night, classroom</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setQuery(query) {
+            document.getElementById('searchInput').value = query;
+        }
+
+        function runFilter() {
+            const q = document.getElementById('searchInput').value;
+            console.log("Filtering by: " + q);
+        }
+    </script>
+</body>
+</html>

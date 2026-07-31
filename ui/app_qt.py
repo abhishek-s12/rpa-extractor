@@ -51,6 +51,7 @@ from ui.widgets.decompiler_tab import DecompilerTabWidget
 from ui.widgets.filter_hud import FilterHudBar
 from ui.widgets.image_inspector import ImageInspector
 from ui.widgets.repacker_tab import RepackerTabWidget
+from ui.widgets.v3_studio_tab import V3StudioTabWidget
 from ui.widgets.video_player import InteractiveVideoPlayer
 
 
@@ -279,6 +280,10 @@ class RenPyExtractorQtApp(QMainWindow):
         # Tab 3: .rpyc Decompiler
         self.decompiler_tab = DecompilerTabWidget()
         self.tab_widget.addTab(self.decompiler_tab, ".rpyc Decompiler")
+
+        # Tab 4: v3.0 Studio
+        self.v3_studio_tab = V3StudioTabWidget()
+        self.tab_widget.addTab(self.v3_studio_tab, "v3.0 Studio")
 
         self.main_splitter.addWidget(self.tab_widget)
         self.main_splitter.setSizes([280, 960])

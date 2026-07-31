@@ -116,11 +116,57 @@ class SmartFilterEngine:
                     logger.warning(f"Invalid regex pattern: {pattern_str}")
                 continue
 
+            # Tag filter: tag:happy
+            if token.lower().startswith("tag:"):
+                tag_val = token[4:].strip().lower()
+                filtered = [
+                    a for a in filtered
+                    if tag_val in [t.lower() for t in a.get("tags", [])]
+                    or tag_val in [t.lower() for t in a.get("details", {}).get("tags", [])]
+                    or tag_val in a.get("details", {}).get("tags_str", "").lower()
+                ]
+                continue
+
+            # Character filter: character:heroine
+            if token.lower().startswith("character:") or token.lower().startswith("char:"):
+                prefix_len = 10 if token.lower().startswith("character:") else 5
+                char_val = token[prefix_len:].strip().lower()
+                filtered = [
+                    a for a in filtered
+                    if char_val in str(a.get("character", "")).lower()
+                    or char_val in str(a.get("details", {}).get("character", "")).lower()
+                ]
+                continue
+
+            # Location filter: location:classroom
+            if token.lower().startswith("location:") or token.lower().startswith("loc:"):
+                prefix_len = 9 if token.lower().startswith("location:") else 4
+                loc_val = token[prefix_len:].strip().lower()
+                filtered = [
+                    a for a in filtered
+                    if loc_val in str(a.get("location", "")).lower()
+                    or loc_val in str(a.get("details", {}).get("location", "")).lower()
+                ]
+                continue
+
+            # Expression filter: expression:happy / expr:surprised
+            if token.lower().startswith("expression:") or token.lower().startswith("expr:"):
+                prefix_len = 11 if token.lower().startswith("expression:") else 5
+                expr_val = token[prefix_len:].strip().lower()
+                filtered = [
+                    a for a in filtered
+                    if expr_val in str(a.get("expression", "")).lower()
+                    or expr_val in str(a.get("details", {}).get("expression", "")).lower()
+                ]
+                continue
+
             # General substring text match
             term = token.lower()
             filtered = [
                 a for a in filtered
-                if term in a.get("name", "").lower() or term in a.get("rel_path", "").lower()
+                if term in a.get("name", "").lower()
+                or term in a.get("rel_path", "").lower()
+                or term in str(a.get("details", {}).get("tags", "")).lower()
             ]
 
         return filtered
@@ -160,6 +206,8 @@ class PresetManager:
                 "High-Res Sprites": "cat:images width >= 1080",
                 "Large Files": "size > 10MB",
                 "Ren'Py Scripts": "ext:rpy ext:rpyc",
+                "Happy Heroine": "cat:images tag:happy char:main_heroine",
+                "Night Scenes": "cat:images location:night",
             }
             self.save_all(default_presets)
             return default_presets
@@ -192,3 +240,18 @@ class PresetManager:
 
     def get_preset(self, name: str) -> Optional[str]:
         return self.presets.get(name)
+
+    def export_presets_json(self) -> str:
+        """Exports presets to formatted JSON string for cloud sync."""
+        return json.dumps(self.presets, indent=2)
+
+    def import_presets_json(self, json_str: str) -> None:
+        """Imports and merges presets from JSON string."""
+        try:
+            data = json.loads(json_str)
+            if isinstance(data, dict):
+                self.presets.update({str(k): str(v) for k, v in data.items()})
+                self.save_all(self.presets)
+        except Exception as e:
+            logger.error(f"Failed to import presets JSON: {e}")
+

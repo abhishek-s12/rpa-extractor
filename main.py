@@ -210,6 +210,166 @@ def decompile_cmd(
         raise typer.Exit(code=1)
 
 
+@app.command(name="translate")
+def translate_cmd(
+    path: Path = typer.Argument(..., help="Path to .rpy file or directory containing .rpy scripts."),
+    target_lang: str = typer.Option("Spanish", "--target-lang", "-l", help="Target language for translation."),
+    api_key: Optional[str] = typer.Option(None, "--api-key", "-k", help="Gemini API Key (uses offline mode if not set)."),
+) -> None:
+    """Translates Ren'Py .rpy scripts using AI translation pipeline preserving text formatting tags."""
+    setup_logger(debug=False)
+    logger.info(f"Starting CLI script translation for {path} into {target_lang}")
+    try:
+        from parsers.translation_engine import RenpyScriptTranslator
+        translator = RenpyScriptTranslator(api_key=api_key, target_lang=target_lang)
+        if path.is_file():
+            out = translator.translate_script_file(path)
+            logger.info(f"Translated script saved: {out}")
+        elif path.is_dir():
+            out_dir = path.parent / f"{path.name}_{target_lang.lower()}"
+            res = translator.translate_directory(path, out_dir)
+            logger.info(f"Translated {len(res)} scripts into {out_dir}")
+    except Exception as e:
+        logger.error(f"Translation command failed: {e}")
+        raise typer.Exit(code=1)
+
+
+@app.command(name="tag")
+def tag_cmd(
+    path: Path = typer.Argument(..., help="Extracted assets directory path to tag and index."),
+) -> None:
+    """Indexes asset metadata with AI emotion, character sprite, and background scene tags."""
+    setup_logger(debug=False)
+    logger.info(f"Starting AI asset tagging for {path}")
+    try:
+        from extractors.image_tagger import SmartMetadataIndexer
+        catalog = SmartMetadataIndexer.index_directory(path)
+        logger.info(f"Successfully tagged {len(catalog)} assets in metadata.json")
+    except Exception as e:
+        logger.error(f"Tag command failed: {e}")
+        raise typer.Exit(code=1)
+
+
+@app.command(name="watch")
+def watch_cmd(
+    watch_dir: Path = typer.Argument(..., help="Modded asset directory to watch for live hot-reloading."),
+    game_dir: Optional[Path] = typer.Option(None, "--game-dir", "-g", help="Target Ren'Py game directory for RPA override injection."),
+) -> None:
+    """Watches asset folder for changes and live-reloads modified sprites and audio in-game."""
+    setup_logger(debug=False)
+    logger.info(f"Starting Hot-Reloading Studio watcher on {watch_dir}")
+    try:
+        from core.live_interceptor import HotReloadStudio, RenPyProcessHooker
+        if game_dir:
+            RenPyProcessHooker.inject_rpa_override_hook(game_dir, watch_dir)
+
+        studio = HotReloadStudio(watch_dir)
+        studio.start()
+        logger.info("Watcher running. Press Ctrl+C to exit.")
+        import time
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            studio.stop()
+    except Exception as e:
+        logger.error(f"Watch command failed: {e}")
+        raise typer.Exit(code=1)
+
+
+@app.command(name="diff")
+def diff_cmd(
+    v1: Path = typer.Argument(..., help="Path to Version 1 asset directory."),
+    v2: Path = typer.Argument(..., help="Path to Version 2 asset directory."),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output folder for diff report and pixel heatmaps."),
+) -> None:
+    """Compares two asset version releases and generates visual/audio difference reports."""
+    setup_logger(debug=False)
+    logger.info(f"Starting version diff: {v1} vs {v2}")
+    try:
+        from core.version_diff import AssetVersionComparator
+        report = AssetVersionComparator.compare_directories(v1, v2, output)
+        logger.info(f"Diff Summary: {report['summary']}")
+    except Exception as e:
+        logger.error(f"Diff command failed: {e}")
+        raise typer.Exit(code=1)
+
+
+@app.command(name="upscale")
+def upscale_cmd(
+    path: Path = typer.Argument(..., help="Path to image file or directory of images."),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Target output file or folder."),
+    scale: int = typer.Option(2, "--scale", "-s", help="Scale factor: 2 or 4."),
+    clean_alpha: bool = typer.Option(False, "--clean-alpha", help="Apply alpha-channel edge de-fringing."),
+) -> None:
+    """Upscales visual novel sprites and CG backgrounds with AI 4K texture upscaler."""
+    setup_logger(debug=False)
+    logger.info(f"Starting texture upscaler for {path} (scale={scale}x, clean_alpha={clean_alpha})")
+    try:
+        from extractors.media_pipeline import SpriteCleaner, TextureUpscaler
+        if path.is_file():
+            out_p = output if output else path.parent / f"{path.stem}_{scale}x{path.suffix}"
+            TextureUpscaler.upscale_image(path, out_p, scale=scale)
+            if clean_alpha:
+                SpriteCleaner.clean_transparency(out_p, out_p)
+            logger.info(f"Processed image saved to: {out_p}")
+        elif path.is_dir():
+            out_dir = output if output else path.parent / f"{path.name}_{scale}x"
+            out_dir.mkdir(parents=True, exist_ok=True)
+            for img in path.rglob("*.*"):
+                if img.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp"):
+                    rel = img.relative_to(path)
+                    dest = out_dir / rel
+                    TextureUpscaler.upscale_image(img, dest, scale=scale)
+                    if clean_alpha:
+                        SpriteCleaner.clean_transparency(dest, dest)
+            logger.info(f"Successfully processed directory: {out_dir}")
+    except Exception as e:
+        logger.error(f"Upscale command failed: {e}")
+        raise typer.Exit(code=1)
+
+
+@app.command(name="transcode")
+def transcode_cmd(
+    input_dir: Path = typer.Argument(..., help="Input directory containing media assets."),
+    output_dir: Path = typer.Argument(..., help="Output directory for transcoded assets."),
+    audio_format: str = typer.Option("ogg", "--audio-format", "-a", help="Audio target format: 'ogg' or 'opus'."),
+    image_format: str = typer.Option("webp", "--image-format", "-i", help="Image target format: 'webp' or 'avif'."),
+) -> None:
+    """Batch transcodes audio assets to OGG/Opus and images to WebP/AVIF."""
+    setup_logger(debug=False)
+    logger.info(f"Starting batch transcoding from {input_dir} to {output_dir}")
+    try:
+        from extractors.media_pipeline import BatchTranscoder
+        stats = BatchTranscoder.transcode_directory(input_dir, output_dir, audio_format=audio_format, image_format=image_format)
+        logger.info(f"Batch transcoding complete: {stats}")
+    except Exception as e:
+        logger.error(f"Transcode command failed: {e}")
+        raise typer.Exit(code=1)
+
+
+@app.command(name="plugin")
+def plugin_cmd(
+    action: str = typer.Argument("list", help="Action: 'list' or 'discover'"),
+    plugin_dir: Optional[Path] = typer.Option(None, "--dir", "-d", help="Directory containing python plugins to discover."),
+) -> None:
+    """Manages community extractor plugins and decryptor extensions."""
+    setup_logger(debug=False)
+    try:
+        from core.plugin_sdk import PluginRegistry
+        if action == "discover" and plugin_dir:
+            count = PluginRegistry.discover_plugins(plugin_dir)
+            logger.info(f"Discovered and loaded {count} new plugins from {plugin_dir}")
+
+        plugins = PluginRegistry.list_plugins()
+        logger.info("--- Registered Plugins ---")
+        for p in plugins:
+            logger.info(f"  - {p['name']} v{p['version']} by {p['author']}: {p['description']}")
+    except Exception as e:
+        logger.error(f"Plugin command failed: {e}")
+        raise typer.Exit(code=1)
+
+
 @app.command(name="gui")
 def gui_cmd(debug: bool = typer.Option(False, "--debug", help="Enable debug logs in app log file.")) -> None:
     """Launches the PySide6 desktop GUI application."""
